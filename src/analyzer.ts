@@ -8,6 +8,7 @@ export interface AnalyzerOptions {
     rootDir: string;
     checkDevDeps?: boolean;
     ignore?: string[];
+    verbose?: boolean;
 }
 
 export interface DependencyUsage {
@@ -20,11 +21,13 @@ export class Analyzer {
     private rootDir: string;
     private checkDevDeps: boolean;
     private ignore: Set<string>;
+    private verbose: boolean;
 
     constructor(options: AnalyzerOptions) {
         this.rootDir = path.resolve(options.rootDir);
         this.checkDevDeps = options.checkDevDeps || false;
         this.ignore = new Set(options.ignore || []);
+        this.verbose = options.verbose || false;
     }
 
     async getDependencies(): Promise<Record<string, string>> {
@@ -56,11 +59,24 @@ export class Analyzer {
         const used = new Set<string>();
 
         for (const file of files) {
+            if (this.verbose) {
+                logger.debug(`Scanning file: ${path.relative(this.rootDir, file)}`);
+            }
             try {
                 const content = await fs.readFile(file, 'utf-8');
                 const ast = parse(content, {
                     sourceType: 'module',
-                    plugins: ['jsx', 'typescript', 'decorators-legacy', 'dynamicImport', 'exportDefaultFrom'],
+                    plugins: [
+                        'jsx',
+                        'typescript',
+                        'decorators-legacy',
+                        'dynamicImport',
+                        'exportDefaultFrom',
+                        'classProperties',
+                        'objectRestSpread',
+                        'optionalCatchBinding',
+                        'asyncGenerators'
+                    ],
                     errorRecovery: true,
                 });
 
@@ -91,8 +107,42 @@ export class Analyzer {
                     }
                 });
             } catch (err: any) {
-                logger.debug(`Failed to parse ${file}: ${err.message}`);
+                logger.warn(`Failed to parse ${file}: ${err.message}. Usage in this file may be missed.`);
             }
+        }
+
+        // Special Handling: React DOM
+        // If 'react' is used, 'react-dom' is almost certainly required even if not explicitly imported
+        // (e.g. implicitly used by frameworks or aliased).
+        if (used.has('react')) {
+            used.add('react-dom');
+        }
+
+        // Expanded Heuristic: Shared Scope Usage
+        // If a package '@scope/main' is used, other installed packages in '@scope/*' 
+        // are likely peer dependencies or re-exported parts used implicitly.
+        const usedScopes = new Set<string>();
+        for (const usedDep of used) {
+            if (usedDep.startsWith('@')) {
+                const scope = usedDep.split('/')[0];
+                usedScopes.add(scope);
+            }
+        }
+
+        // If we found a used scope, mark all other dependencies in that scope as used.
+        // This prevents false positives in component libraries like @heroui, @radix-ui, etc.
+        // If we found a used scope, mark all other dependencies in that scope as used.
+        // This prevents false positives in component libraries like @heroui, @radix-ui, etc.
+        if (usedScopes.size > 0) {
+            const deps = await this.getDependencies();
+            Object.keys(deps).forEach(dep => {
+                if (dep.startsWith('@')) {
+                    const scope = dep.split('/')[0];
+                    if (usedScopes.has(scope)) {
+                        used.add(dep);
+                    }
+                }
+            });
         }
 
         return used;
@@ -114,6 +164,10 @@ export class Analyzer {
             if (parts.length > 0) {
                 pkgName = parts[0];
             }
+        }
+
+        if (this.verbose) {
+            logger.debug(`Found import: ${pkgName} (raw: ${importPath})`);
         }
 
         set.add(pkgName);

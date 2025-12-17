@@ -58,7 +58,11 @@ unused-dep-clean scan
 Automatically removes unused packages from `package.json`.
 
 ```bash
+# Remove ALL unused dependencies
 unused-dep-clean clean
+
+# Remove a SINGLE unused dependency
+unused-dep-clean clean <package-name>
 ```
 
 **Options:**
