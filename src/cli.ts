@@ -59,13 +59,13 @@ cli
     });
 
 cli
-    .command('clean')
-    .description('Remove unused dependencies')
+    .command('clean [packageName]')
+    .description('Remove unused dependencies (or a specific one if packageName is provided)')
     .option('--dry-run', 'Simulate removal without modifying files')
     .option('--dev', 'Check devDependencies as well')
     .option('--ignore <file>', 'Path to custom ignore file')
     .option('--verbose', 'Enable verbose logging')
-    .action(async (options) => {
+    .action(async (packageName, options) => {
         const rootDir = process.cwd();
         const config = await loadConfig(rootDir, options.ignore);
 
@@ -85,7 +85,17 @@ cli
             const results = await analyzer.analyze();
             spinner.stop();
 
-            const unused = results.filter(r => !r.isUsed).map(r => r.name);
+            let unused = results.filter(r => !r.isUsed).map(r => r.name);
+
+            if (packageName) {
+                if (unused.includes(packageName)) {
+                    unused = [packageName];
+                    logger.info(`Targeting specific dependency: ${packageName}`);
+                } else {
+                    logger.warn(`Dependency '${packageName}' is either used or not found.`);
+                    return;
+                }
+            }
 
             if (unused.length === 0) {
                 logger.success('No unused dependencies found to clean.');
