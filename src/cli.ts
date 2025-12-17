@@ -34,7 +34,8 @@ cli
             const analyzer = new Analyzer({
                 rootDir,
                 checkDevDeps: options.dev,
-                ignore: config.ignore
+                ignore: config.ignore,
+                verbose: options.verbose
             });
 
             const results = await analyzer.analyze();
@@ -79,7 +80,8 @@ cli
             const analyzer = new Analyzer({
                 rootDir,
                 checkDevDeps: options.dev,
-                ignore: config.ignore
+                ignore: config.ignore,
+                verbose: options.verbose
             });
 
             const results = await analyzer.analyze();
