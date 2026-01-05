@@ -6,7 +6,7 @@ A powerful, AST-based CLI tool to scan your Node.js project and strictly identif
 ![license](https://img.shields.io/npm/l/unused-dep-cleaner)
 ![downloads](https://img.shields.io/npm/dt/unused-dep-cleaner)
 ![TypeScript](https://img.shields.io/badge/built%20with-TypeScript-blue)
-![stars](https://img.shields.io/github/stars/hashan2kk2/Unused-Dependency-Cleaner)
+![stars](https://img.shields.io/github/stars/hashan2kk2/unused-dep-cleaner)
 
 <br />
 
