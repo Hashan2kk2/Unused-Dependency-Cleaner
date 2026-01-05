@@ -2,8 +2,13 @@
 
 A powerful, AST-based CLI tool to scan your Node.js project and strictly identify or remove unused NPM dependencies. It helps reduce `node_modules` bloat and keep your `package.json` clean.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![npm](https://img.shields.io/npm/v/unused-dep-cleaner)
+![license](https://img.shields.io/npm/l/unused-dep-cleaner)
+![downloads](https://img.shields.io/npm/dt/unused-dep-cleaner)
 ![TypeScript](https://img.shields.io/badge/built%20with-TypeScript-blue)
+![stars](https://img.shields.io/github/stars/hashan2kk2/Unused-Dependency-Cleaner)
+
+<br />
 
 ## Why use this?
 
